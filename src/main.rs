@@ -6,7 +6,7 @@ const SUPPORTED_FORMATS: [&str; 2] = ["json", "yaml"];
 const DEFAULT_STACK_FILE: &str = "stackfile";
 
 mod app;
-mod parser;
+mod stack;
 
 fn main() {
     let stackfile: String;
@@ -45,7 +45,7 @@ fn main() {
             stackfile = match stackfiles_found.pop() {
                 Some(f) => f,
                 _ => {
-                    println!("stackfile(.json|.yaml) does not exist");
+                    println!("stackfile does not exist in the current working directory");
                     exit(1)
                 }
             };
@@ -57,10 +57,9 @@ fn main() {
         _ => "",
     };
 
-    let stack = parser::parse(&stackfile, &stack_format);
-    //
-    // TODO:
-    // stack_up(stack)
-    //
-    println!("{:?}", stack)
+    let stack = stack::parser::parse(&stackfile, &stack_format);
+
+    match stack::up(stack) {
+        _ => {}
+    }
 }
