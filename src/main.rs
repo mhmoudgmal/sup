@@ -6,9 +6,11 @@ const SUPPORTED_FORMATS: [&str; 2] = ["json", "yaml"];
 const DEFAULT_STACK_FILE: &str = "stackfile";
 
 mod app;
+mod localstack;
 mod stack;
 
-fn main() {
+#[tokio::main]
+pub async fn main() {
     let stackfile: String;
     let args = app::match_args();
 
@@ -59,7 +61,8 @@ fn main() {
 
     let stack = stack::parser::parse(&stackfile, &stack_format);
 
-    match stack::up(stack) {
-        _ => {}
+    match stack::up(stack).await {
+        Ok(_) => {},
+        Err(_) => {},
     }
 }
