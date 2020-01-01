@@ -1,3 +1,5 @@
+pub mod aws;
+
 use std::str;
 use tokio::process::Command;
 

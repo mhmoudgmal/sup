@@ -8,20 +8,13 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
         Ok(true) => {
             match localstack::running_version().await {
                 Ok(running_version) => if running_version == stack.localstack_version {
-                    println!("TODO:// deploy the stack");
-                    // deploy(stack);
+                    deploy(stack);
                 } else {
                     localstack::stop().await?;
                     localstack::remove().await?;
                     localstack::start(&stack.localstack_version).await?;
 
-                    println!("TODO:// deploy the stack");
-
-                    // TODO: use recursion `up(stack).await?`
-                    // so that we can call deploy(stack) only in one palce which is conditioned by
-                    // by if the running_version is same as the version specified in stack.localstack_version
-                    //
-                    // deploy(stack);
+                    deploy(stack);
                 },
                 Err(_) => println!("Error??"),
             }
@@ -32,17 +25,23 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
             localstack::remove().await?;
             localstack::start(&stack.localstack_version).await?;
 
-            println!("TODO:// deploy the stack");
-
-            // TODO: use recursion `up(stack).await?`
-            // so that we can call deploy(stack) only in one palce which is conditioned by
-            // by if the running_version is same version specified in stack.localstack_version
-            //
-            // deploy(stack);
+            deploy(stack);
         },
 
         Err(_) => println!("Error??"),
     }
 
     Ok(())
+}
+
+fn deploy (stack: Stack) {
+    for (name, opts) in stack.services {
+        match opts {
+            parser::Service::Apigateway { .. } => localstack::aws::apigateway::deploy((name, opts)),
+            parser::Service::Dynamo { .. } => localstack::aws::dynamo::deploy((name, opts)),
+            parser::Service::Kinesis { .. } => localstack::aws::kinesis::deploy((name, opts)),
+            parser::Service::Lambda { .. } => localstack::aws::lambda::deploy((name, opts)),
+            parser::Service::S3 { .. } => localstack::aws::s3::deploy((name, opts)),
+        }
+    }
 }

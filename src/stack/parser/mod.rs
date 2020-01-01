@@ -40,7 +40,7 @@ pub enum Service {
 #[derive(Deserialize, Debug)]
 pub struct Stack {
     pub localstack_version: String,
-    services: HashMap<String, Service>,
+    pub services: HashMap<String, Service>,
 }
 
 pub fn parse(stackfile: &str, format: &str) -> Stack {
