@@ -2,10 +2,13 @@ use std::ffi::OsStr;
 use std::path::Path;
 use std::process::exit;
 
+use ext::rust::PathExt;
+
 const SUPPORTED_FORMATS: [&str; 2] = ["json", "yaml"];
 const DEFAULT_STACK_FILE: &str = "stackfile";
 
 mod app;
+mod ext;
 mod localstack;
 mod stack;
 
@@ -16,7 +19,7 @@ pub async fn main() {
 
     match args.value_of("stackfile") {
         Some(f) => {
-            if !Path::new(&f).exists() {
+            if Path::new(&f).does_not_exist() {
                 println!("stackfile {} does not exit", f);
                 exit(1)
             }
