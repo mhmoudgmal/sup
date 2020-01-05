@@ -4,9 +4,6 @@ use std::process::exit;
 
 use ext::rust::PathExt;
 
-const SUPPORTED_FORMATS: [&str; 2] = ["json", "yaml"];
-const DEFAULT_STACK_FILE: &str = "stackfile";
-
 mod app;
 mod ext;
 mod localstack;
@@ -28,15 +25,7 @@ pub async fn main() {
         }
 
         None => {
-            let mut stackfiles_found = Vec::new();
-
-            for format in SUPPORTED_FORMATS.iter() {
-                let file = format!("{}.{}", DEFAULT_STACK_FILE, format);
-
-                if Path::new(&file).exists() {
-                    stackfiles_found.push(file);
-                }
-            }
+            let mut stackfiles_found = stack::find("", ".");
 
             if stackfiles_found.len() > 1 {
                 println!("more than one stackfile was found in the current directory");
@@ -62,7 +51,10 @@ pub async fn main() {
         _ => "",
     };
 
-    let stack = stack::parser::parse(&stackfile, &stack_format);
+    let stack = match stack::parser::parse(&stackfile, &stack_format) {
+        Some(stack) => stack,
+        None => exit(1),
+    };
 
     match stack::up(stack).await {
         Ok(_) => {},

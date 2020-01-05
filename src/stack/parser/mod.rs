@@ -1,16 +1,18 @@
 use std::collections::HashMap;
 use std::fs;
-use std::process::exit;
 
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-pub enum Service {
+pub enum AWSService {
     Lambda {
         runtime: String,
         handler: String,
+        #[serde(default)]
         env_file: String,
+        #[serde(default)]
+        env_vars: HashMap<String, String>,
         function: String,
         files: Vec<String>,
         function_path: String,
@@ -33,8 +35,26 @@ pub enum Service {
     },
     S3 {
         bucket: String,
+        #[serde(default)]
         files: HashMap<String, String>,
     },
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Dep {
+    #[serde(default)]
+    pub services: Vec<String>,
+    pub location: String,
+    #[serde(default)]
+    pub stackfile: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Service {
+    #[serde(flatten)]
+    pub variant: AWSService,
+    #[serde(default)]
+    pub deps: HashMap<String, Dep>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -43,7 +63,7 @@ pub struct Stack {
     pub services: HashMap<String, Service>,
 }
 
-pub fn parse(stackfile: &str, format: &str) -> Stack {
+pub fn parse(stackfile: &str, format: &str) -> Option<Stack> {
     let data = fs::read_to_string(&stackfile).expect("failed reading stackfile");
 
     match format.as_ref() {
@@ -54,7 +74,7 @@ pub fn parse(stackfile: &str, format: &str) -> Stack {
                 "don't know how to parse '{}', not supported stackfile format",
                 stackfile
             );
-            exit(1)
+            return None;
         }
     }
 }

@@ -1,7 +1,38 @@
 pub mod parser;
 
+use std::ffi::OsStr;
+use std::path::Path;
+
 use crate::localstack;
 use parser::Stack;
+use parser::Service;
+use parser::AWSService::*;
+use localstack::aws::*;
+
+const DEFAULT_STACK_FILE: &str = "stackfile";
+pub const SUPPORTED_FORMATS: [&str; 2] = ["json", "yaml"];
+
+pub fn find(stackfile: &str, loc: &str) -> Vec<String> {
+    let mut stackfiles_found = Vec::new();
+
+    if stackfile == "" {
+        for format in SUPPORTED_FORMATS.iter() {
+            let file = format!("{}/{}.{}", loc, DEFAULT_STACK_FILE, format);
+
+            if Path::new(&file).exists() {
+                stackfiles_found.push(file);
+            }
+        }
+    } else {
+        let file = format!("{}/{}", loc, stackfile);
+
+        if Path::new(&file).exists() {
+            stackfiles_found.push(file);
+        }
+    }
+
+    return stackfiles_found;
+}
 
 pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
     match localstack::is_running().await {
@@ -35,13 +66,55 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn deploy (stack: Stack) {
-    for (name, opts) in stack.services {
-        match opts {
-            parser::Service::Apigateway { .. } => localstack::aws::apigateway::deploy((name, opts)),
-            parser::Service::Dynamo { .. } => localstack::aws::dynamo::deploy((name, opts)),
-            parser::Service::Kinesis { .. } => localstack::aws::kinesis::deploy((name, opts)),
-            parser::Service::Lambda { .. } => localstack::aws::lambda::deploy((name, opts)),
-            parser::Service::S3 { .. } => localstack::aws::s3::deploy((name, opts)),
+    for (name, service) in stack.services {
+        // deploy dependencies
+        match &service {
+            Service { deps, .. } => {
+                for (name, dep) in deps {
+                    let mut stackfiles_found = find(&dep.stackfile, &dep.location);
+
+                    if stackfiles_found.len() > 1 {
+                        println!("more than one stackfile was found for dep ({}) at ({})", name, dep.location);
+                        println!("stackfiles:");
+                        for file in stackfiles_found.iter() {
+                            println!("\t- {}", file);
+                        }
+                        println!("skipping dep ({})", name);
+                        continue;
+                    }
+
+                    let dep_stackfile = match stackfiles_found.pop() {
+                        Some(f) => f,
+                        _ => {
+                            println!("stackfile ({}) for dep ({}) does not exist in ({})", dep.stackfile, name, dep.location);
+                            println!("skipping dep ({})", name);
+                            continue;
+                        }
+                    };
+
+                    let stack_format = match Path::new(&dep_stackfile).extension().and_then(OsStr::to_str) {
+                        Some(ext) => ext,
+                        _ => "",
+                    };
+
+                    let dep_stack = match crate::stack::parser::parse(&dep_stackfile, &stack_format) {
+                        Some(stack) => stack,
+                        None => continue,
+                    };
+
+                    // TODO: cd to dependency stack location
+                    deploy(dep_stack);
+                    // TODO: cd back to dependant stack location
+                }
+            }
+        }
+
+        match service.variant {
+            Apigateway { .. } => apigateway::deploy((name, service.variant)),
+            Dynamo { .. } => dynamo::deploy((name, service.variant)),
+            Kinesis { .. } => kinesis::deploy((name, service.variant)),
+            Lambda { .. } => lambda::deploy((name, service.variant)),
+            S3 { .. } => s3::deploy((name, service.variant)),
         }
     }
 }
