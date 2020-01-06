@@ -1,4 +1,3 @@
-extern crate clap;
 use clap::{App, Arg, ArgMatches};
 
 pub fn match_args<'a>() -> ArgMatches<'a> {

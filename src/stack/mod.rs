@@ -3,6 +3,9 @@ pub mod parser;
 use std::ffi::OsStr;
 use std::path::Path;
 
+use log::*;
+use colored::*;
+
 use crate::localstack;
 use parser::Stack;
 use parser::Service;
@@ -10,7 +13,7 @@ use parser::AWSService::*;
 use localstack::aws::*;
 
 const DEFAULT_STACK_FILE: &str = "stackfile";
-pub const SUPPORTED_FORMATS: [&str; 2] = ["json", "yaml"];
+const SUPPORTED_FORMATS: [&str; 2] = ["json", "yaml"];
 
 pub fn find(stackfile: &str, loc: &str) -> Vec<String> {
     let mut stackfiles_found = Vec::new();
@@ -47,7 +50,7 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
 
                     deploy(stack);
                 },
-                Err(_) => println!("Error??"),
+                Err(_) => error!("Error??"),
             }
 
         },
@@ -59,7 +62,7 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
             deploy(stack);
         },
 
-        Err(_) => println!("Error??"),
+        Err(_) => error!("Error??"),
     }
 
     Ok(())
@@ -74,20 +77,28 @@ fn deploy (stack: Stack) {
                     let mut stackfiles_found = find(&dep.stackfile, &dep.location);
 
                     if stackfiles_found.len() > 1 {
-                        println!("more than one stackfile was found for dep ({}) at ({})", name, dep.location);
-                        println!("stackfiles:");
+                        error!(
+                            "more than one stackfile was found for dep ({}) at ({})",
+                            name.yellow(),
+                            dep.location.yellow()
+                        );
                         for file in stackfiles_found.iter() {
-                            println!("\t- {}", file);
+                            info!("found {}", file.yellow());
                         }
-                        println!("skipping dep ({})", name);
+                        error!("skipping dep ({})", name.yellow());
                         continue;
                     }
 
                     let dep_stackfile = match stackfiles_found.pop() {
                         Some(f) => f,
                         _ => {
-                            println!("stackfile ({}) for dep ({}) does not exist in ({})", dep.stackfile, name, dep.location);
-                            println!("skipping dep ({})", name);
+                            error!(
+                                "stackfile ({}) for dep ({}) does not exist in ({})",
+                                dep.stackfile.yellow(),
+                                name.yellow(),
+                                dep.location.yellow()
+                            );
+                            error!("skipping dep ({})", name.yellow());
                             continue;
                         }
                     };

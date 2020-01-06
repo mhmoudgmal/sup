@@ -1,6 +1,9 @@
 pub mod aws;
 
 use std::str;
+
+use log::*;
+use colored::*;
 use tokio::process::Command;
 
 const CONTAINER_NAME: &str = "lsup_localstack";
@@ -62,7 +65,7 @@ pub async fn start(version: &str) -> Result<(), Box<dyn std::error::Error>> {
         .spawn()
         .expect("failed to run the container");
 
-    println!("strting localstack version: {}", localstack_version);
+    info!("starting localstack version {}", localstack_version.yellow());
     localstack_process.await?;
 
     Ok(())

@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::fs;
 
+use colored::*;
+use log::*;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -70,9 +72,9 @@ pub fn parse(stackfile: &str, format: &str) -> Option<Stack> {
         "json" => serde_json::from_str(&data).unwrap(),
         "yaml" => serde_yaml::from_str(&data).unwrap(),
         _ => {
-            println!(
+            error!(
                 "don't know how to parse '{}', not supported stackfile format",
-                stackfile
+                stackfile.yellow()
             );
             return None;
         }

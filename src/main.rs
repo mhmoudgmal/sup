@@ -2,6 +2,10 @@ use std::ffi::OsStr;
 use std::path::Path;
 use std::process::exit;
 
+use log::*;
+use colored::*;
+use pretty_env_logger;
+
 use ext::rust::PathExt;
 
 mod app;
@@ -11,13 +15,15 @@ mod stack;
 
 #[tokio::main]
 pub async fn main() {
+    pretty_env_logger::init();
+
     let stackfile: String;
     let args = app::match_args();
 
     match args.value_of("stackfile") {
         Some(f) => {
             if Path::new(&f).does_not_exist() {
-                println!("stackfile {} does not exit", f);
+                error!("stackfile '{}' does not exit", f.yellow());
                 exit(1)
             }
 
@@ -28,10 +34,9 @@ pub async fn main() {
             let mut stackfiles_found = stack::find("", ".");
 
             if stackfiles_found.len() > 1 {
-                println!("more than one stackfile was found in the current directory");
-                println!("stackfiles:");
+                error!("{}", "more than one stackfile was found in the current directory".red());
                 for file in stackfiles_found.iter() {
-                    println!("\t- {}", file);
+                    info!("found {}", file.yellow());
                 }
                 exit(1);
             }
@@ -39,7 +44,7 @@ pub async fn main() {
             stackfile = match stackfiles_found.pop() {
                 Some(f) => f,
                 _ => {
-                    println!("stackfile does not exist in the current working directory");
+                    error!("{}", "stackfile does not exist in the current working directory".red());
                     exit(1)
                 }
             };
