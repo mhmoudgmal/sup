@@ -40,29 +40,35 @@ pub fn find(stackfile: &str, loc: &str) -> Vec<String> {
 pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
     match localstack::is_running().await {
         Ok(true) => {
+            info!("checking if localstack is running");
             match localstack::running_version().await {
                 Ok(running_version) => if running_version == stack.localstack_version {
+                    info!("localstack is already running");
                     deploy(stack);
                 } else {
-                    localstack::stop().await?;
-                    localstack::remove().await?;
-                    localstack::start(&stack.localstack_version).await?;
+                    warn!("localstack is already running on a differnt version: '{}'", running_version.yellow());
+                    warn!("stopping localstack version: '{}'", running_version.yellow());
+                    localstack::stop().await;
+                    localstack::remove().await;
+                    info!("starting localstack version: '{}'", &stack.localstack_version.yellow());
+                    localstack::start(&stack.localstack_version).await;
 
                     deploy(stack);
                 },
-                Err(_) => error!("Error??"),
+                Err(e) => error!("{}", e),
             }
 
         },
 
         Ok(false) => {
-            localstack::remove().await?;
-            localstack::start(&stack.localstack_version).await?;
+            localstack::remove().await;
+            info!("starting localstack version: '{}'", &stack.localstack_version.yellow());
+            localstack::start(&stack.localstack_version).await;
 
             deploy(stack);
         },
 
-        Err(_) => error!("Error??"),
+        Err(e) => error!("{}", e),
     }
 
     Ok(())
@@ -70,22 +76,23 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
 
 fn deploy (stack: Stack) {
     for (name, service) in stack.services {
-        // deploy dependencies
         match &service {
             Service { deps, .. } => {
                 for (name, dep) in deps {
+                    info!("deploying dependency: '{}' at '{}'", name.yellow(), dep.location.yellow());
+
                     let mut stackfiles_found = find(&dep.stackfile, &dep.location);
 
                     if stackfiles_found.len() > 1 {
                         error!(
-                            "more than one stackfile was found for dep ({}) at ({})",
+                            "more than one stackfile was found for dep '{}' at '{}'",
                             name.yellow(),
                             dep.location.yellow()
                         );
                         for file in stackfiles_found.iter() {
                             info!("found {}", file.yellow());
                         }
-                        error!("skipping dep ({})", name.yellow());
+                        error!("skipping dep '{}'", name.yellow());
                         continue;
                     }
 
@@ -93,12 +100,11 @@ fn deploy (stack: Stack) {
                         Some(f) => f,
                         _ => {
                             error!(
-                                "stackfile ({}) for dep ({}) does not exist in ({})",
-                                dep.stackfile.yellow(),
+                                "no stackfile found for dep '{}' does not exist in '{}'",
                                 name.yellow(),
                                 dep.location.yellow()
                             );
-                            error!("skipping dep ({})", name.yellow());
+                            error!("skipping dep '{}'", name.yellow());
                             continue;
                         }
                     };

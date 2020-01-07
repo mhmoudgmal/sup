@@ -1,9 +1,8 @@
 pub mod aws;
 
 use std::str;
+use std::process::ExitStatus;
 
-use log::*;
-use colored::*;
 use tokio::process::Command;
 
 const CONTAINER_NAME: &str = "lsup_localstack";
@@ -41,10 +40,10 @@ pub async fn is_running() -> Result<bool, Box<dyn std::error::Error>> {
     }
 }
 
-pub async fn start(version: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn start(version: &str) -> ExitStatus {
     let localstack_version = ensure_version(version);
 
-    let localstack_process = Command::new("docker")
+    Command::new("docker")
         .arg("run")
         .arg("-d")
         .args(&["-p", "4567-4583:4567-4583"])
@@ -62,37 +61,27 @@ pub async fn start(version: &str) -> Result<(), Box<dyn std::error::Error>> {
         ])
         .args(&["--name", CONTAINER_NAME])
         .arg(format!("localstack/localstack:{}", localstack_version))
-        .spawn()
-        .expect("failed to run the container");
-
-    info!("starting localstack version {}", localstack_version.yellow());
-    localstack_process.await?;
-
-    Ok(())
+        .status()
+        .await
+        .expect("failed to stop localstack")
 }
 
-pub async fn stop() -> Result<(), Box<dyn std::error::Error>> {
-    let localstack_process = Command::new("docker")
+pub async fn stop() -> ExitStatus {
+    Command::new("docker")
         .arg("stop")
         .arg(CONTAINER_NAME)
-        .spawn()
-        .expect("failed to stop the container");
-
-    localstack_process.await?;
-
-    Ok(())
+        .status()
+        .await
+        .expect("failed to stop localstack")
 }
 
-pub async fn remove() -> Result<(), Box<dyn std::error::Error>> {
-    let localstack_process = Command::new("docker")
+pub async fn remove() -> ExitStatus {
+    Command::new("docker")
         .arg("rm")
         .arg(CONTAINER_NAME)
-        .spawn()
-        .expect("failed to remove the container");
-
-    localstack_process.await?;
-
-    Ok(())
+        .status()
+        .await
+        .expect("failed to remove the container")
 }
 
 fn ensure_version(version: &str) -> &str {
