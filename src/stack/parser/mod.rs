@@ -40,6 +40,8 @@ pub enum AWSService {
         #[serde(default)]
         files: HashMap<String, String>,
     },
+    SNS {},
+    SQS {},
 }
 
 #[derive(Deserialize, Debug)]

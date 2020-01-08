@@ -9,8 +9,6 @@ use colored::*;
 use crate::localstack;
 use parser::Stack;
 use parser::Service;
-use parser::AWSService::*;
-use localstack::aws::*;
 
 const DEFAULT_STACK_FILE: &str = "stackfile";
 const SUPPORTED_FORMATS: [&str; 2] = ["json", "yaml"];
@@ -126,12 +124,7 @@ fn deploy (stack: Stack) {
             }
         }
 
-        match service.variant {
-            Apigateway { .. } => apigateway::deploy((name, service.variant)),
-            Dynamo { .. } => dynamo::deploy((name, service.variant)),
-            Kinesis { .. } => kinesis::deploy((name, service.variant)),
-            Lambda { .. } => lambda::deploy((name, service.variant)),
-            S3 { .. } => s3::deploy((name, service.variant)),
-        }
+        let aws_service = service.variant;
+        localstack::aws::deploy((name, aws_service));
     }
 }
