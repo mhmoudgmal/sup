@@ -34,6 +34,8 @@ pub enum AWSService {
     },
     Kinesis {
         stream_name: String,
+        #[serde(default)]
+        shard_count: u32,
     },
     S3 {
         bucket: String,
