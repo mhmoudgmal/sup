@@ -62,8 +62,25 @@ pub struct Service {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct LocalstackConfig {
+    pub version: String,
+    pub services: Vec<String>,
+    pub docker_host: String,
+    #[serde(default)]
+    pub lambda_executer: String,
+    #[serde(default)]
+    pub data_dir: String,
+    #[serde(default)]
+    pub port_web_ui: String,
+    #[serde(default)]
+    pub debug: String,
+    #[serde(default)]
+    pub kinesis_error_probability: u32,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct Stack {
-    pub localstack_version: String,
+    pub localstack_config: LocalstackConfig,
     pub services: HashMap<String, Service>,
 }
 

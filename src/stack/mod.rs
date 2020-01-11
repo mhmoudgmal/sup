@@ -40,7 +40,7 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
         Ok(true) => {
             info!("checking if localstack is running");
             match localstack::running_version().await {
-                Ok(running_version) => if running_version == stack.localstack_version {
+                Ok(running_version) => if running_version == stack.localstack_config.version {
                     info!("localstack is already running");
                     deploy(stack);
                 } else {
@@ -48,8 +48,8 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
                     warn!("stopping localstack version: '{}'", running_version.yellow());
                     localstack::stop().await;
                     localstack::remove().await;
-                    info!("starting localstack version: '{}'", &stack.localstack_version.yellow());
-                    localstack::start(&stack.localstack_version).await;
+                    info!("starting localstack version: '{}'", &stack.localstack_config.version.yellow());
+                    localstack::start(&stack.localstack_config).await;
 
                     deploy(stack);
                 },
@@ -60,8 +60,8 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
 
         Ok(false) => {
             localstack::remove().await;
-            info!("starting localstack version: '{}'", &stack.localstack_version.yellow());
-            localstack::start(&stack.localstack_version).await;
+            info!("starting localstack version: '{}'", &stack.localstack_config.version.yellow());
+            localstack::start(&stack.localstack_config).await;
 
             deploy(stack);
         },

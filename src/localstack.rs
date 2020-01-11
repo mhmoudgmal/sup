@@ -5,6 +5,8 @@ use std::process::ExitStatus;
 
 use tokio::process::Command;
 
+use crate::stack::parser::LocalstackConfig;
+
 const CONTAINER_NAME: &str = "lsup_localstack";
 
 pub async fn running_version() -> Result<String, Box<dyn std::error::Error>> {
@@ -40,8 +42,9 @@ pub async fn is_running() -> Result<bool, Box<dyn std::error::Error>> {
     }
 }
 
-pub async fn start(version: &str) -> ExitStatus {
-    let localstack_version = ensure_version(version);
+pub async fn start(config: &LocalstackConfig) -> ExitStatus {
+    let version = ensure_version(&config.version);
+    let services = config.services.join(",");
 
     Command::new("docker")
         .arg("run")
@@ -49,18 +52,15 @@ pub async fn start(version: &str) -> ExitStatus {
         .args(&["-p", "4567-4583:4567-4583"])
         .args(&["-v", "/var/run/docker.sock:/var/run/docker.sock"])
         .args(&["-v", "/tmp/localstack:/tmp/localstack"])
-        .args(&["-e", "SERVICES=${SERVICES- }"])
-        .args(&["-e", "DEBUG=${DEBUG- }"])
-        .args(&["-e", "DATA_DIR=${DATA_DIR- }"])
-        .args(&["-e", "PORT_WEB_UI=${PORT_WEB_UI- }"])
-        .args(&["-e", "LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR- }"])
-        .args(&["-e", "DOCKER_HOST=unix:///var/run/docker.sock"])
-        .args(&[
-            "-e",
-            "KINESIS_ERROR_PROBABILITY=${KINESIS_ERROR_PROBABILITY- }",
-        ])
+        .args(&["-e", &format!("SERVICES={}", services)])
+        .args(&["-e", &format!("DEBUG={}", config.debug)])
+        .args(&["-e", &format!("DATA_DIR={}", config.data_dir)])
+        .args(&["-e", &format!("PORT_WEB_UI={}", config.port_web_ui)])
+        .args(&["-e", &format!("LAMBDA_EXECUTOR={}", config.lambda_executer)])
+        .args(&["-e", &format!("DOCKER_HOST={}", config.docker_host)])
+        .args(&[ "-e", &format!("KINESIS_ERROR_PROBABILITY={}", config.kinesis_error_probability)])
         .args(&["--name", CONTAINER_NAME])
-        .arg(format!("localstack/localstack:{}", localstack_version))
+        .arg(format!("localstack/localstack:{}", version))
         .status()
         .await
         .expect("failed to stop localstack")
