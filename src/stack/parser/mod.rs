@@ -48,7 +48,9 @@ pub enum AWSService {
     SNS {
         topic: String,
     },
-    SQS {},
+    SQS {
+        queue: String,
+    },
 }
 
 #[derive(Deserialize, Debug)]
