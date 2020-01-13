@@ -9,6 +9,7 @@ use colored::*;
 use crate::localstack;
 use parser::Stack;
 use parser::Service;
+use crate::stack::parser::LocalstackConfig;
 
 const DEFAULT_STACK_FILE: &str = "stackfile";
 const SUPPORTED_FORMATS: [&str; 2] = ["json", "yaml"];
@@ -36,45 +37,41 @@ pub fn find(stackfile: &str, loc: &str) -> Vec<String> {
 }
 
 pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
-    match localstack::is_running().await {
-        Ok(true) => {
-            info!("checking if localstack is running");
-            match localstack::running_version().await {
-                Ok(running_version) => if running_version == stack.localstack_config.version {
-                    info!("localstack is already running");
-                    deploy(stack);
-                } else {
-                    warn!("localstack is already running on a differnt version: '{}'", running_version.yellow());
-                    warn!("stopping localstack version: '{}'", running_version.yellow());
-                    localstack::stop().await;
-                    localstack::remove().await;
-                    info!("starting localstack version: '{}'", &stack.localstack_config.version.yellow());
-                    localstack::start(&stack.localstack_config).await;
 
-                    deploy(stack);
-                },
-                Err(e) => error!("{}", e),
-            }
-
-        },
-
-        Ok(false) => {
-            localstack::remove().await;
-            info!("starting localstack version: '{}'", &stack.localstack_config.version.yellow());
-            localstack::start(&stack.localstack_config).await;
-
-            deploy(stack);
-        },
-
-        Err(e) => error!("{}", e),
+    async fn recreate(config: &LocalstackConfig) {
+        localstack::remove().await;
+        info!("starting localstack version: '{}'", config.version.yellow());
+        localstack::start(&config).await;
     }
 
+    if stack.localstack_config.recreate {
+        warn!("stopping localstack");
+        localstack::stop().await;
+        recreate(&stack.localstack_config).await;
+    }
+
+    info!("checking if localstack is running");
+    if localstack::is_running().await? {
+        let running_version = localstack::running_version().await?;
+        if running_version == stack.localstack_config.version {
+            info!("localstack is already running");
+        } else {
+            warn!("localstack is already running on a differnt version: '{}'", running_version.yellow());
+            warn!("stopping localstack");
+            localstack::stop().await;
+            recreate(&stack.localstack_config).await;
+        }
+    } else {
+        recreate(&stack.localstack_config).await;
+    }
+
+    deploy(stack);
     Ok(())
 }
 
 fn deploy (stack: Stack) {
     for (name, service) in stack.services {
-        match &service {
+        match service {
             Service { deps, .. } => {
                 for (name, dep) in deps {
                     info!("deploying dependency: '{}' at '{}'", name.yellow(), dep.location.yellow());
@@ -96,9 +93,9 @@ fn deploy (stack: Stack) {
 
                     let dep_stackfile = match stackfiles_found.pop() {
                         Some(f) => f,
-                        _ => {
+                        None => {
                             error!(
-                                "no stackfile found for dep '{}' does not exist in '{}'",
+                                "no stackfile found for dep '{}' at '{}'",
                                 name.yellow(),
                                 dep.location.yellow()
                             );
@@ -109,7 +106,7 @@ fn deploy (stack: Stack) {
 
                     let stack_format = match Path::new(&dep_stackfile).extension().and_then(OsStr::to_str) {
                         Some(ext) => ext,
-                        _ => "",
+                        None => "",
                     };
 
                     let dep_stack = match crate::stack::parser::parse(&dep_stackfile, &stack_format) {
