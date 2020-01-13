@@ -4,6 +4,7 @@ use std::fs;
 use colored::*;
 use log::*;
 use serde::Deserialize;
+use serde_json::Value;
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
@@ -30,7 +31,9 @@ pub enum AWSService {
     },
     Dynamo {
         table_name: String,
-        schema_file: String,
+        schema: Value,
+        #[serde(default)]
+        recreate: bool,
     },
     Kinesis {
         stream_name: String,
