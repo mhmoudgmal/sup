@@ -63,6 +63,6 @@ pub async fn main() {
 
     match stack::up(stack).await {
         Ok(_) => {},
-        Err(_) => {},
+        Err(err) => error!("{}", err),
     }
 }

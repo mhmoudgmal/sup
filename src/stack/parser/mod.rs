@@ -85,6 +85,8 @@ pub struct LocalstackConfig {
     pub debug: String,
     #[serde(default)]
     pub kinesis_error_probability: u32,
+    #[serde(default)]
+    pub recreate: bool,
 }
 
 #[derive(Deserialize, Debug)]
