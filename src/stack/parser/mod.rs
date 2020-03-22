@@ -16,7 +16,7 @@ pub enum AWSService {
         env_file: String,
         #[serde(default)]
         env_vars: HashMap<String, String>,
-        function: String,
+        function_name: String,
         files: Vec<String>,
         function_path: String,
     },
