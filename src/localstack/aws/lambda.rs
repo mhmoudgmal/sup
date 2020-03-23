@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::env;
 use std::path::Path;
+use std::str;
 
 use colored::*;
 use log::*;
@@ -28,8 +30,14 @@ pub async fn deploy((name, service): (String, AWSService)) {
                 function_path.yellow()
             );
 
-            let zipfile = create_zip(name, files).await;
-            let vars = variables(env_file, env_vars);
+            let wd = Command::new("pwd")
+                .output()
+                .await
+                .expect("failed to print working dir");
+
+            let wd = str::from_utf8(&wd.stdout[..wd.stdout.len() - 1]);
+
+            env::set_current_dir(function_path);
 
             if function_exists(&function_name).await {
                 Command::new("aws")
@@ -41,6 +49,9 @@ pub async fn deploy((name, service): (String, AWSService)) {
                     .await
                     .expect("failed to delete lambda");
             }
+
+            let zipfile = create_zip(&name, files).await;
+            let vars = variables(env_file, env_vars);
 
             Command::new("aws")
                 .arg("lambda")
@@ -61,6 +72,8 @@ pub async fn deploy((name, service): (String, AWSService)) {
                 function_name.yellow()
             );
             delete_zip(zipfile).await;
+
+            env::set_current_dir(wd.unwrap());
         }
 
         _ => (),
@@ -106,7 +119,7 @@ async fn function_exists(function_name: &str) -> bool {
     }
 }
 
-async fn create_zip(name: String, files: Vec<String>) -> String {
+async fn create_zip(name: &str, files: Vec<String>) -> String {
     info!("Create zipfile for ({}) files", files.join(", "));
 
     // TODO: replace lsup with unique dynamic value
