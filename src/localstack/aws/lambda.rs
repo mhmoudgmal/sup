@@ -30,12 +30,7 @@ pub async fn deploy((name, service): (String, AWSService)) {
                 function_path.yellow()
             );
 
-            let wd = Command::new("pwd")
-                .output()
-                .await
-                .expect("failed to print working dir");
-
-            let wd = str::from_utf8(&wd.stdout[..wd.stdout.len() - 1]);
+            let wd = env::current_dir().expect("failed to get current working dir");
 
             env::set_current_dir(function_path);
 
@@ -73,7 +68,7 @@ pub async fn deploy((name, service): (String, AWSService)) {
             );
             delete_zip(zipfile).await;
 
-            env::set_current_dir(wd.unwrap());
+            env::set_current_dir(wd);
         }
 
         _ => (),
