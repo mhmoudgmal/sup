@@ -1,0 +1,22 @@
+{
+    "localstack_config": {
+        "version": "0.10.8",
+        "services": ["lambda"],
+        "lambda_executer": "docker-reuse",
+        "docker_host": "unix:///var/run/docker.sock"
+    },
+    "services": {
+        "go": {
+            "runtime": "go1.x",
+            "handler": "main",
+            "env_file": ".env.test",
+            "function_name": "test_go_function",
+            "env_vars": {
+                "BAR": "bar",
+                "BAZ": "baz"
+            },
+            "files": ["main", ".env.test"],
+            "function_path": "go"
+        }
+    }
+}

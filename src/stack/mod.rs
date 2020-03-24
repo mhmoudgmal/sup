@@ -1,15 +1,15 @@
 pub mod parser;
 
+use std::env;
 use std::ffi::OsStr;
 use std::path::Path;
+use std::str;
 
-use log::*;
 use colored::*;
+use log::*;
 
 use crate::localstack;
-use parser::Stack;
-use parser::Service;
-use crate::stack::parser::LocalstackConfig;
+use crate::stack::parser::{LocalstackConfig, Service, Stack};
 
 const DEFAULT_STACK_FILE: &str = "stackfile";
 const SUPPORTED_FORMATS: [&str; 2] = ["json", "yaml"];
@@ -37,7 +37,6 @@ pub fn find(stackfile: &str, loc: &str) -> Vec<String> {
 }
 
 pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
-
     async fn recreate(config: &LocalstackConfig) {
         localstack::remove().await;
         info!("starting localstack version: '{}'", config.version.yellow());
@@ -56,7 +55,10 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
         if running_version == stack.localstack_config.version {
             info!("localstack is already running");
         } else {
-            warn!("localstack is already running on a differnt version: '{}'", running_version.yellow());
+            warn!(
+                "localstack is already running on a differnt version: '{}'",
+                running_version.yellow()
+            );
             warn!("stopping localstack");
             localstack::stop().await;
             recreate(&stack.localstack_config).await;
@@ -69,12 +71,16 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn deploy (stack: Stack) {
+fn deploy(stack: Stack) {
     for (name, service) in stack.services {
         match service {
             Service { deps, .. } => {
                 for (name, dep) in deps {
-                    info!("deploying dependency: '{}' at '{}'", name.yellow(), dep.location.yellow());
+                    info!(
+                        "deploying dependency: '{}' at '{}'",
+                        name.yellow(),
+                        dep.location.yellow()
+                    );
 
                     let mut stackfiles_found = find(&dep.stackfile, &dep.location);
 
@@ -104,19 +110,25 @@ fn deploy (stack: Stack) {
                         }
                     };
 
-                    let stack_format = match Path::new(&dep_stackfile).extension().and_then(OsStr::to_str) {
+                    let stack_format = match Path::new(&dep_stackfile)
+                        .extension()
+                        .and_then(OsStr::to_str)
+                    {
                         Some(ext) => ext,
                         None => "",
                     };
 
-                    let dep_stack = match crate::stack::parser::parse(&dep_stackfile, &stack_format) {
+                    let dep_stack = match crate::stack::parser::parse(&dep_stackfile, &stack_format)
+                    {
                         Some(stack) => stack,
                         None => continue,
                     };
 
-                    // TODO: cd to dependency stack location
+                    let wd = env::current_dir().expect("failed to get current working dir");
+
+                    env::set_current_dir(dep.location).expect("failed to change dir");
                     deploy(dep_stack);
-                    // TODO: cd back to dependant stack location
+                    env::set_current_dir(wd).expect("failed to change dir");
                 }
             }
         }

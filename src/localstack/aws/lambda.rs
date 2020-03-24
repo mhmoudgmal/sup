@@ -32,7 +32,7 @@ pub async fn deploy((name, service): (String, AWSService)) {
 
             let wd = env::current_dir().expect("failed to get current working dir");
 
-            env::set_current_dir(function_path);
+            env::set_current_dir(function_path).expect("failed to change dir");
 
             if function_exists(&function_name).await {
                 Command::new("aws")
@@ -68,7 +68,7 @@ pub async fn deploy((name, service): (String, AWSService)) {
             );
             delete_zip(zipfile).await;
 
-            env::set_current_dir(wd);
+            env::set_current_dir(wd).expect("failed to change dir");
         }
 
         _ => (),
