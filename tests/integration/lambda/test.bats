@@ -6,6 +6,9 @@ load '../../libs/bats-assert/load'
 setup() {
   cd stack
   RUST_LOG=info ../../../../target/debug/lsup --stackfile stackfile.json 2>&1
+
+  # TODO: fix localstack init to wait for all LocalStack services to be ready
+  sleep 5
 }
 
 teardown() {

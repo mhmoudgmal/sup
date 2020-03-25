@@ -1,0 +1,16 @@
+language: rust
+
+rust:
+  - stable
+
+before_script:
+  - sudo apt-get install jq
+  - pip install --user pip
+  - pip install --user awscli
+
+  - aws configure set aws_access_key_id AKIAIOSFODNN7EXAMPLE
+  - aws configure set aws_secret_access_key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+  - aws configure set region eu-central-1
+
+script:
+  - make test
