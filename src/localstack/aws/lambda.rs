@@ -76,12 +76,12 @@ pub async fn deploy((name, service): (String, AWSService)) {
 }
 
 fn variables(env_file: String, env_vars: HashMap<String, String>) -> String {
-    // the following snippet was copied from
-    // https://docs.rs/configurable/0.3.3/src/configurable/env.rs.html#22-38
+    // src: https://docs.rs/configurable/0.3.3/src/configurable/env.rs.html#22-38
+    // https://github.com/museun/configurable/issues/4
     let mut vars = std::fs::read_to_string(env_file)
         .map(|data| {
             data.lines()
-                .filter(|s| s.starts_with('#'))
+                .filter(|s| !s.starts_with('#'))
                 .filter_map(|line| {
                     let mut line = line.splitn(2, '=').map(str::trim);
                     Some((line.next()?.into(), line.next()?.into()))
