@@ -35,19 +35,18 @@ teardown() {
 }
 
 @test "lambda: include all ENV vars from the dot env file and the stack file" {
-  local go_fn_vars='test_go_function={\"BAR\":\"bar\",\"BAZ\":\"baz\",\"FOO\":\"foo\"}'
-  local node_fn_vars='test_ruby_function_with_dep={\"BAR\":\"bar\",\"BAZ\":\"baz\",\"FOO\":\"foo\"}'
-  local ruby_fn_vars='test_node_function={\"BAR\":\"bar\",\"BAZ\":\"baz\",\"FOO\":\"foo\"}'
-  local ruby_fn_with_dep_vars='test_ruby_function={\"BAR\":\"bar\",\"BAZ\":\"baz\",\"FOO\":\"foo\"}'
-
   run echo $(
     aws lambda list-functions --endpoint-url http://localhost:4574 \
-    | jq --compact-output '."Functions" |  map("\(."FunctionName")=\(."Environment"."Variables")")'
+    | jq '."Functions"
+    | map({ (."FunctionName"):(."Environment"."Variables") })
+    | add
+    | with_entries(select(.value."FOO"=="foo" and .value."BAR"=="bar" and .value."BAZ"=="baz"))
+    | keys'
   )
 
   assert_success
-  assert_output --partial $go_fn_vars
-  assert_output --partial $node_fn_vars
-  assert_output --partial $ruby_fn_vars
-  assert_output --partial $ruby_fn_with_dep_vars
+  assert_output --partial "test_go_function"
+  assert_output --partial "test_node_function"
+  assert_output --partial "test_ruby_function"
+  assert_output --partial "test_ruby_function_with_dep"
 }
