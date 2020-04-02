@@ -1,0 +1,35 @@
+{
+    "localstack_config": {
+        "version": "0.10.8",
+        "services": ["lambda", "cloudwatch"],
+        "lambda_executer": "docker-reuse",
+        "docker_host": "unix:///var/run/docker.sock",
+        "recreate": true
+    },
+    "services": {
+        "node_lambda": {
+            "runtime": "nodejs10.x",
+            "handler": "index.js",
+            "env_file": ".env.test",
+            "function_name": "test_function",
+            "env_vars": {
+                "AA": "1",
+                "BB": "2"
+            },
+            "files": ["index.js", "a_not_existing_file_is_skipped"],
+            "function_path": "."
+        },
+        "go_lambda": {
+            "runtime": "go1.x",
+            "handler": "main",
+            "env_file": ".env.test",
+            "function_name": "test_go_function",
+            "env_vars": {
+                "BAR": "bar",
+                "BAZ": "baz"
+            },
+            "files": ["main", ".env.test"],
+            "function_path": "."
+        }
+    }
+}
