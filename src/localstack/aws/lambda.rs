@@ -56,7 +56,7 @@ pub async fn deploy((name, service): (String, AWSService)) {
                 .args(&["--environment", &vars])
                 .args(&["--function-name", &function_name])
                 .args(&["--zip-file", &format!("fileb://{}", zipfile)])
-                .args(&["--role", "arn:aws:iam::000000000000:role/lsup"])
+                .args(&["--role", "arn:aws:iam::000000000000:role/sup"])
                 .args(&["--endpoint-url", LOCALSTACK_LAMBDA_ENDPOINT])
                 .status()
                 .await
@@ -117,8 +117,8 @@ async fn function_exists(function_name: &str) -> bool {
 async fn create_zip(name: &str, files: Vec<String>) -> String {
     info!("Create zipfile for ({}) files", files.join(", "));
 
-    // TODO: replace lsup with unique dynamic value
-    let zipfile = format!("{}_{}.zip", name, "lsup");
+    // TODO: replace sup with unique dynamic value
+    let zipfile = format!("{}_{}.zip", name, "sup");
 
     // create empty zip file
     Command::new("zip")

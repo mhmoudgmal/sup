@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/mhmoudgmal/lsup.svg?token=r3SpzFYyL6HzDssGTPPR&branch=master)](https://travis-ci.org/mhmoudgmal/lsup)
+[![Build Status](https://travis-ci.com/mhmoudgmal/sup.svg?token=r3SpzFYyL6HzDssGTPPR&branch=master)](https://travis-ci.org/mhmoudgmal/sup)
 
 Localstack CLI **(Under development)**
 

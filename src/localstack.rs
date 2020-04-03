@@ -1,13 +1,13 @@
 pub mod aws;
 
-use std::str;
 use std::process::ExitStatus;
+use std::str;
 
 use tokio::process::Command;
 
 use crate::stack::parser::LocalstackConfig;
 
-const CONTAINER_NAME: &str = "lsup_localstack";
+const CONTAINER_NAME: &str = "sup_localstack";
 
 pub async fn running_version() -> Result<String, Box<dyn std::error::Error>> {
     let running_version_command = Command::new("docker")
@@ -58,7 +58,13 @@ pub async fn start(config: &LocalstackConfig) -> ExitStatus {
         .args(&["-e", &format!("PORT_WEB_UI={}", config.port_web_ui)])
         .args(&["-e", &format!("LAMBDA_EXECUTOR={}", config.lambda_executer)])
         .args(&["-e", &format!("DOCKER_HOST={}", config.docker_host)])
-        .args(&[ "-e", &format!("KINESIS_ERROR_PROBABILITY={}", config.kinesis_error_probability)])
+        .args(&[
+            "-e",
+            &format!(
+                "KINESIS_ERROR_PROBABILITY={}",
+                config.kinesis_error_probability
+            ),
+        ])
         .args(&["--name", CONTAINER_NAME])
         .arg(format!("localstack/localstack:{}", version))
         .status()

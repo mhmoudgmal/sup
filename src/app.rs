@@ -1,7 +1,7 @@
 use clap::{App, Arg, ArgMatches};
 
 pub fn match_args<'a>() -> ArgMatches<'a> {
-    return App::new("lsup")
+    return App::new("sup")
         .version("0.1")
         .author("Mahmoud G. <mhmoudgmal.89@gmail.com>")
         .about("TODO://")
