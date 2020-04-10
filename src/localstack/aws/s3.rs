@@ -46,27 +46,21 @@ pub async fn deploy((name, service): (String, AWSService)) {
                     continue;
                 }
 
-                if metadata(&file).unwrap().is_dir() {
-                    Command::new("aws")
-                        .arg("s3")
-                        .arg("sync")
-                        .arg(&file)
-                        .arg(format!("s3://{}/{}", bucket, file))
-                        .args(&["--endpoint-url", LOCALSTACK_S3_ENDPOINT])
-                        .status()
-                        .await
-                        .expect("failed to sync dir to s3 bucket");
+                let cmd = if metadata(&file).unwrap().is_dir() {
+                    "sync"
                 } else {
-                    Command::new("aws")
-                        .arg("s3")
-                        .arg("cp")
-                        .arg(&file)
-                        .arg(format!("s3://{}", bucket))
-                        .args(&["--endpoint-url", LOCALSTACK_S3_ENDPOINT])
-                        .status()
-                        .await
-                        .expect("failed to copy file to s3 bucket");
-                }
+                    "cp"
+                };
+
+                Command::new("aws")
+                    .arg("s3")
+                    .arg(cmd)
+                    .arg(&file)
+                    .arg(format!("s3://{}/{}", bucket, file))
+                    .args(&["--endpoint-url", LOCALSTACK_S3_ENDPOINT])
+                    .status()
+                    .await
+                    .expect("failed to copy/sync file to s3 bucket");
             }
         }
 
