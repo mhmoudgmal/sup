@@ -1,0 +1,24 @@
+{
+    "localstack_config": {
+        "version": "0.10.8",
+        "services": ["s3"],
+        "lambda_executer": "docker-reuse",
+        "docker_host": "unix:///var/run/docker.sock"
+    },
+    "services": {
+        "s3_service": {
+            "bucket": "bucket_1",
+            "recreate": true,
+            "files": [
+                "file",
+                "folder",
+                "a_not_existing_file_and_folder_are_skipped"
+            ]
+        },
+        "s3_service": {
+            "bucket": "bucket_2",
+            "recreate": false,
+            "files": ["another_file"]
+        }
+    }
+}

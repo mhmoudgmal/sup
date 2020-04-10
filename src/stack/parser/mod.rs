@@ -43,7 +43,9 @@ pub enum AWSService {
     S3 {
         bucket: String,
         #[serde(default)]
-        files: HashMap<String, String>,
+        recreate: bool,
+        #[serde(default)]
+        files: Vec<String>,
     },
     SNS {
         topic: String,

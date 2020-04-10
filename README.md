@@ -60,3 +60,4 @@ $ RUST_LOG=info sup
 - sns
 - sqs
 - kinesis
+- s3

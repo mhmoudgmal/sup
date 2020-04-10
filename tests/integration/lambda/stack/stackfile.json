@@ -1,9 +1,10 @@
 {
     "localstack_config": {
         "version": "0.10.8",
-        "services": ["lambda"],
+        "services": [],
         "lambda_executer": "docker-reuse",
-        "docker_host": "unix:///var/run/docker.sock"
+        "docker_host": "unix:///var/run/docker.sock",
+        "recreate": false
     },
     "services": {
         "nodejs": {
