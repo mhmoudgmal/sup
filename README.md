@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.com/mhmoudgmal/sup.svg?token=r3SpzFYyL6HzDssGTPPR&branch=master)](https://travis-ci.com/mhmoudgmal/sup)
-
 Localstack CLI **(Under development)**
 
 > sup? A simple and easy to use command line interface to automate and simplify working with localstack in the development environments based on AWS services.
@@ -39,7 +37,7 @@ Localstack CLI **(Under development)**
     }
 }
 ```
-**Note** - for more examples of stack descriptions, check [examples](examples)
+for more examples of stack descriptions, check [examples](examples)
 
 ##### 2. Deploy your stack
 
