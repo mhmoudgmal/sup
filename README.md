@@ -44,13 +44,13 @@ Localstack CLI **(Under development)**
 ##### 2. Deploy your stack
 
 ```sh
-$ RUST_LOG=info sup --stackfile my_stack.json
+$ sup --stackfile my_stack.json
 ```
 
 **Note** - if the stack is described in a `json` or `yaml` file with the name `stackfile` then there is no need to specify the `--stackfile` option while deploying the stack.
 
 ```sh
-$ RUST_LOG=info sup
+$ sup
 ```
 
 ### Supported services

@@ -18,6 +18,9 @@ mod stack;
 pub async fn main() {
     pretty_env_logger::init();
 
+    env::set_var("AWS_PAGER", "");
+    env::set_var("RUST_LOG", "info");
+
     let stackfile: String;
     let args = app::match_args();
 
