@@ -5,6 +5,7 @@ use std::str;
 
 use tokio::process::Command;
 
+use crate::localstack;
 use crate::stack::parser::LocalstackConfig;
 
 const CONTAINER_NAME: &str = "sup_localstack";
@@ -42,7 +43,7 @@ pub async fn is_running() -> Result<bool, Box<dyn std::error::Error>> {
     }
 }
 
-pub async fn start(config: &LocalstackConfig) -> ExitStatus {
+pub async fn start(config: &LocalstackConfig) {
     let version = ensure_version(&config.version);
     let services = config.services.join(",");
 
@@ -69,7 +70,9 @@ pub async fn start(config: &LocalstackConfig) -> ExitStatus {
         .arg(format!("localstack/localstack:{}", version))
         .status()
         .await
-        .expect("failed to stop localstack")
+        .expect("failed to start localstack");
+
+    localstack::aws::wait_for_it(&config.services).await;
 }
 
 pub async fn stop() -> ExitStatus {

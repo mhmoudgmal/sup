@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::env;
+use std::error::Error;
 use std::path::Path;
 use std::str;
 
@@ -12,6 +13,26 @@ use crate::ext::rust::PathExt;
 use crate::stack::parser::AWSService;
 
 const LOCALSTACK_LAMBDA_ENDPOINT: &str = "http://localhost:4574";
+
+pub async fn wait_for_it() -> Result<(), Box<dyn Error>> {
+    let mut ready: bool = false;
+
+    while !ready {
+        warn!("waiting for localstack's lambda to be ready..");
+
+        let cmd = Command::new("aws")
+            .arg("lambda")
+            .arg("list-functions")
+            .args(&["--endpoint-url", LOCALSTACK_LAMBDA_ENDPOINT])
+            .status()
+            .await?;
+
+        if cmd.success() {
+            ready = true;
+        }
+    }
+    Ok(())
+}
 
 pub async fn deploy((name, service): (String, AWSService)) {
     match service {
@@ -38,6 +59,7 @@ pub async fn deploy((name, service): (String, AWSService)) {
                 Command::new("aws")
                     .arg("lambda")
                     .arg("delete-function")
+                    .args(&["--output", "table"])
                     .args(&["--function-name", &function_name])
                     .args(&["--endpoint-url", LOCALSTACK_LAMBDA_ENDPOINT])
                     .status()
@@ -51,6 +73,7 @@ pub async fn deploy((name, service): (String, AWSService)) {
             Command::new("aws")
                 .arg("lambda")
                 .arg("create-function")
+                .args(&["--output", "table"])
                 .args(&["--runtime", &runtime])
                 .args(&["--handler", &handler])
                 .args(&["--environment", &vars])

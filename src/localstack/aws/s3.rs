@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::fs::metadata;
 use std::path::Path;
 
@@ -9,6 +10,26 @@ use crate::ext::rust::PathExt;
 use crate::stack::parser::AWSService;
 
 const LOCALSTACK_S3_ENDPOINT: &str = "http://localhost:4572";
+
+pub async fn wait_for_it() -> Result<(), Box<dyn Error>> {
+    let mut ready: bool = false;
+
+    while !ready {
+        warn!("waiting for localstack's s3 to be ready..");
+
+        let cmd = Command::new("aws")
+            .arg("s3")
+            .arg("ls")
+            .args(&["--endpoint-url", LOCALSTACK_S3_ENDPOINT])
+            .status()
+            .await?;
+
+        if cmd.success() {
+            ready = true;
+        }
+    }
+    Ok(())
+}
 
 pub async fn deploy((name, service): (String, AWSService)) {
     match service {
