@@ -1,16 +1,41 @@
+use std::error::Error;
 use std::path::Path;
 
-use log::*;
 use colored::*;
+use log::*;
 use tokio::process::Command;
 
 use crate::stack::parser::*;
 
 const LOCALSTACK_DYNAMODB_ENDPOINT: &str = "http://localhost:4569";
 
+pub async fn wait_for_it() -> Result<(), Box<dyn Error>> {
+    let mut ready: bool = false;
+
+    while !ready {
+        warn!("waiting for localstack's dynamodb to be ready..");
+
+        let cmd = Command::new("aws")
+            .arg("dynamodb")
+            .arg("list-tables")
+            .args(&["--endpoint-url", LOCALSTACK_DYNAMODB_ENDPOINT])
+            .status()
+            .await?;
+
+        if cmd.success() {
+            ready = true;
+        }
+    }
+    Ok(())
+}
+
 pub async fn deploy((name, service): (String, AWSService)) {
     match service {
-        AWSService::Dynamo { table_name, schema, recreate } => {
+        AWSService::Dynamo {
+            table_name,
+            schema,
+            recreate,
+        } => {
             if recreate {
                 info!("deleting dynamodb table '{}'", name.yellow());
                 delete_table(&table_name).await
@@ -29,10 +54,14 @@ pub async fn deploy((name, service): (String, AWSService)) {
                 sch = schema.to_string();
             } else if schema.is_string() {
                 sch = match schema.as_str() {
-                    Some(f) => if Path::new(f).exists() { String::from(f) } else {
-                        warn!("schema file does not exist");
-                        warn!("skipping '{}'", name.yellow());
-                        return;
+                    Some(f) => {
+                        if Path::new(f).exists() {
+                            String::from(f)
+                        } else {
+                            warn!("schema file does not exist");
+                            warn!("skipping '{}'", name.yellow());
+                            return;
+                        }
                     }
                     None => {
                         warn!("proper schema is required");
@@ -55,12 +84,10 @@ pub async fn deploy((name, service): (String, AWSService)) {
                 .status()
                 .await
                 .expect("failed to create dynamodb table");
-        },
+        }
 
-        _ => ()
+        _ => (),
     }
-
-    println!("\n")
 }
 
 async fn delete_table(table_name: &str) {
@@ -72,6 +99,4 @@ async fn delete_table(table_name: &str) {
         .status()
         .await
         .expect("failed to delete dynamodb table");
-
-    println!("\n")
 }

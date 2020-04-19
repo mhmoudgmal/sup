@@ -10,10 +10,8 @@ export PATH=$PATH:$(realpath "./libs/bats/bin/")
 #
 # NOTE: this assumes all services are being tested on the same localstack version.
 #
-# TODO: fix localstack init to wait for all LocalStack services to be ready,
 ##
 ../target/debug/sup --stackfile stackfile.json > /dev/null 2>&1
-sleep 5
 
 run () {
   for file in "$1"/*

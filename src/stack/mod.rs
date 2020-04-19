@@ -1,5 +1,6 @@
 pub mod parser;
 
+use futures::executor::block_on;
 use std::env;
 use std::ffi::OsStr;
 use std::path::Path;
@@ -67,11 +68,11 @@ pub async fn up(stack: Stack) -> Result<(), Box<dyn std::error::Error>> {
         recreate(&stack.localstack_config).await;
     }
 
-    deploy(stack);
+    deploy(stack).await;
     Ok(())
 }
 
-fn deploy(stack: Stack) {
+async fn deploy(stack: Stack) {
     for (name, service) in stack.services {
         match service {
             Service { deps, .. } => {
@@ -127,13 +128,13 @@ fn deploy(stack: Stack) {
                     let wd = env::current_dir().expect("failed to get current working dir");
 
                     env::set_current_dir(dep.location).expect("failed to change dir");
-                    deploy(dep_stack);
+                    block_on(deploy(dep_stack));
                     env::set_current_dir(wd).expect("failed to change dir");
                 }
             }
         }
 
         let aws_service = service.variant;
-        localstack::aws::deploy((name, aws_service));
+        localstack::aws::deploy((name, aws_service)).await;
     }
 }

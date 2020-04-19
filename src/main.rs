@@ -1,9 +1,10 @@
+use std::env;
 use std::ffi::OsStr;
 use std::path::Path;
 use std::process::exit;
 
-use log::*;
 use colored::*;
+use log::*;
 use pretty_env_logger;
 
 use ext::rust::PathExt;
@@ -34,7 +35,10 @@ pub async fn main() {
             let mut stackfiles_found = stack::find("", ".");
 
             if stackfiles_found.len() > 1 {
-                error!("{}", "more than one stackfile was found in the current directory".red());
+                error!(
+                    "{}",
+                    "more than one stackfile was found in the current directory".red()
+                );
                 for file in stackfiles_found.iter() {
                     info!("found {}", file.yellow());
                 }
@@ -44,7 +48,10 @@ pub async fn main() {
             stackfile = match stackfiles_found.pop() {
                 Some(f) => f,
                 _ => {
-                    error!("{}", "stackfile does not exist in the current working directory".red());
+                    error!(
+                        "{}",
+                        "stackfile does not exist in the current working directory".red()
+                    );
                     exit(1)
                 }
             };
@@ -62,7 +69,7 @@ pub async fn main() {
     };
 
     match stack::up(stack).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(err) => error!("{}", err),
     }
 }
