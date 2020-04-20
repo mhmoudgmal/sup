@@ -56,7 +56,7 @@ pub async fn deploy((name, service): (String, AWSService)) {
                 sch = match schema.as_str() {
                     Some(f) => {
                         if Path::new(f).exists() {
-                            String::from(f)
+                            String::from(format!("file://{}", f))
                         } else {
                             warn!("schema file does not exist");
                             warn!("skipping '{}'", name.yellow());
