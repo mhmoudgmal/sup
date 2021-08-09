@@ -2,7 +2,7 @@
 
 Localstack CLI **(Under development)**
 
-> sup? A simple and easy to use command line interface to automate and simplify working with localstack in the development environments based on AWS services.
+> sup? A simple and easy to use command line interface to automate and simplify working with [localstack](https://github.com/localstack/localstack) in the development environments based on AWS services.
 
 > Developer and CI friendly.
 
